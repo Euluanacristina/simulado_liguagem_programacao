@@ -257,6 +257,11 @@ main { padding: 24px clamp(16px, 4vw, 40px) 48px; }
   padding: clamp(18px, 4vw, 30px);
 }
 
+#questionText {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 .question-meta {
   display: flex;
   flex-wrap: wrap;

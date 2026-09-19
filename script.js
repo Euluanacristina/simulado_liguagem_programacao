@@ -5,7 +5,8 @@ const app = {
   progress: loadProgress(),
   quiz: null,
   selected: null,
-  answered: false
+  answered: false,
+  currentOptions: []
 };
 
 function loadProgress() {
@@ -50,10 +51,20 @@ function weightedPool(items) {
   items.forEach(q => {
     const stats = app.progress.questions[q.id];
     const mistakeBoost = stats ? Math.min(stats.wrong * 2, 8) : 0;
-    const weight = (q.priority || 1) + mistakeBoost;
+    const topicBoost = topicWeakness(q.topic);
+    const challengeBoost = q.challenge ? 1 : 0;
+    const weight = (q.priority || 1) + mistakeBoost + topicBoost + challengeBoost;
     for (let i = 0; i < weight; i++) pool.push(q);
   });
   return shuffle(pool);
+}
+
+function topicWeakness(topic) {
+  const related = QUESTION_BANK.filter(q => q.topic === topic);
+  const stats = aggregateStats(related);
+  if (stats.attempts < 3) return 0;
+  const wrongRate = stats.wrong / stats.attempts;
+  return Math.min(Math.round(wrongRate * 5), 4);
 }
 
 function uniqueTake(pool, count) {
@@ -74,6 +85,7 @@ function selectQuestions(mode) {
   const mains = mainQuestions();
   const shuffle30 = document.getElementById("shuffleMain30")?.checked;
   if (mode === "main30" || mode === "main30study") return shuffle30 ? shuffle(mains) : [...mains];
+  if (mode === "challenge") return uniqueTake(weightedPool(all.filter(q => q.challenge || q.difficulty === "Difícil")), 15);
   if (mode === "quiz20") return uniqueTake(weightedPool(all), 20);
   if (mode === "quiz30") return uniqueTake(weightedPool(all), 30);
   if (mode === "all") return shuffle(all);
@@ -92,7 +104,26 @@ function selectQuestions(mode) {
       });
     return missed.length ? missed.slice(0, Math.min(missed.length, 20)) : uniqueTake(weightedPool(scope), Math.min(10, scope.length));
   }
+  if (mode === "exam10") return balancedExam10(mains);
   return uniqueTake(weightedPool(mains), 10);
+}
+
+function balancedExam10(scope) {
+  const easy = uniqueTake(weightedPool(scope.filter(q => q.difficulty === "Fácil")), 2);
+  const medium = uniqueTake(weightedPool(scope.filter(q => q.difficulty === "Média")), 5);
+  const hard = uniqueTake(weightedPool(scope.filter(q => q.difficulty === "Difícil")), 3);
+  const picked = [...easy, ...medium, ...hard];
+  if (picked.length < 10) {
+    const rest = uniqueTake(weightedPool(scope.filter(q => !picked.some(p => p.id === q.id))), 10 - picked.length);
+    picked.push(...rest);
+  }
+  return shuffle(picked).slice(0, 10);
+}
+
+function shuffledOptionsFor(question) {
+  const mapped = question.options.map((text, originalIndex) => ({ text, originalIndex }));
+  const shuffled = shuffle(mapped);
+  return shuffled.map((option, visibleIndex) => ({ ...option, visibleIndex }));
 }
 
 function startQuiz(mode) {
@@ -118,6 +149,7 @@ function renderQuestion() {
   const q = quiz.questions[quiz.index];
   app.selected = null;
   app.answered = false;
+  app.currentOptions = shuffledOptionsFor(q);
   document.getElementById("quizModeLabel").textContent = modeLabel(quiz.mode);
   document.getElementById("quizTitle").textContent = q.mainNumber ? `Questão ${q.mainNumber} da Aula 6` : "Questão extra";
   document.getElementById("questionCounter").textContent = `Questão ${quiz.index + 1} de ${quiz.questions.length}`;
@@ -135,11 +167,11 @@ function renderQuestion() {
 
   const options = document.getElementById("optionsList");
   options.innerHTML = "";
-  q.options.forEach((option, index) => {
+  app.currentOptions.forEach((option, index) => {
     const btn = document.createElement("button");
     btn.className = "option";
     btn.type = "button";
-    btn.innerHTML = `<span class="letter">${letters[index]}</span><span>${option}</span>`;
+    btn.innerHTML = `<span class="letter">${letters[index]}</span><span>${option.text}</span>`;
     btn.addEventListener("click", () => selectOption(index));
     options.appendChild(btn);
   });
@@ -153,6 +185,7 @@ function modeLabel(mode) {
     all: "Todas as questões",
     likely: "O que pode cair na prova",
     errors: "Simulado dos meus erros",
+    challenge: "Modo Desafio",
     main30: "30 questões da Aula 6",
     main30study: "Estudo das 30 questões",
     main30errors: "Erradas das 30 principais"
@@ -172,10 +205,13 @@ function confirmAnswer() {
   if (app.selected === null || app.answered) return;
   const quiz = app.quiz;
   const q = quiz.questions[quiz.index];
-  const correct = app.selected === q.answer;
+  const selectedOption = app.currentOptions[app.selected];
+  const correctVisibleIndex = app.currentOptions.findIndex(option => option.originalIndex === q.answer);
+  const correctOption = app.currentOptions[correctVisibleIndex];
+  const correct = selectedOption.originalIndex === q.answer;
   app.answered = true;
   correct ? quiz.correct++ : quiz.wrong++;
-  quiz.answers.push({ id: q.id, selected: app.selected, correct });
+  quiz.answers.push({ id: q.id, selected: selectedOption.originalIndex, correct });
 
   const stats = questionStats(q.id);
   stats.attempts++;
@@ -185,15 +221,15 @@ function confirmAnswer() {
   saveProgress();
 
   [...document.querySelectorAll(".option")].forEach((el, i) => {
-    if (i === q.answer) el.classList.add("correct");
+    if (i === correctVisibleIndex) el.classList.add("correct");
     if (i === app.selected && !correct) el.classList.add("wrong");
   });
 
   const feedback = document.getElementById("feedbackBox");
   feedback.className = `feedback ${correct ? "correct" : "wrong"}`;
   feedback.innerHTML = correct
-    ? `<strong>✓ Acertei</strong><p>${q.explanation}</p><p><b>Assunto:</b> ${q.topic}</p>`
-    : `<strong>✗ Errei</strong><p><b>Você marcou:</b> ${letters[app.selected]} - ${q.options[app.selected]}</p><p><b>Correta:</b> ${letters[q.answer]} - ${q.options[q.answer]}</p><p>${q.explanation}</p><p><b>Assunto:</b> ${q.topic}</p>`;
+    ? `<strong>✓ Acertei</strong><p>${q.explanation}</p><p><b>O que lembrar para a prova:</b> ${q.remember || "Revise o conceito central desta questão."}</p><p><b>Assunto:</b> ${q.topic}</p>`
+    : `<strong>✗ Errei</strong><p><b>Sua resposta:</b> ${letters[app.selected]} - ${selectedOption.text}</p><p><b>Resposta correta:</b> ${letters[correctVisibleIndex]} - ${correctOption.text}</p><p><b>Explicação:</b> ${q.explanation}</p><p><b>O que lembrar para a prova:</b> ${q.remember || "Revise o conceito central desta questão."}</p><p><b>Assunto:</b> ${q.topic}</p>`;
 
   document.getElementById("liveCorrect").textContent = `Acertos: ${quiz.correct}`;
   document.getElementById("liveWrong").textContent = `Erros: ${quiz.wrong}`;
@@ -420,3 +456,14 @@ document.getElementById("resetProgressBtn").addEventListener("click", resetProgr
 
 renderReview();
 renderDynamicSections();
+
+if (typeof window !== "undefined") {
+  window.STUDY_APP = {
+    app,
+    startQuiz,
+    selectOption,
+    confirmAnswer,
+    nextQuestion,
+    showView
+  };
+}

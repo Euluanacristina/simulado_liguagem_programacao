@@ -17,6 +17,9 @@ Abra o arquivo `index.html` no navegador.
 
 - 30 questões principais baseadas no PDF da Aula 6.
 - 15 questões extras baseadas nas Aulas 1 a 5 e material extra.
+- 10 questões de desafio com interpretação de código e situações práticas.
 - Revisão rápida dos principais assuntos de POO.
 - Priorização das questões da Aula 6 nos simulados.
+- Alternativas embaralhadas automaticamente com gabarito preservado.
+- Modo Desafio para questões mais difíceis.
 - Registro de acertos, erros, histórico e desempenho por assunto com localStorage.

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Estudos LP - Prova POO</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Linguagem de Programação</p>
+        <h1>Estudos e Simulados</h1>
+      </div>
+      <button class="ghost danger" id="resetProgressBtn" type="button">Zerar progresso</button>
+    </header>
+
+    <nav class="tabs" aria-label="Navegação principal">
+      <button class="tab active" data-view="dashboard" type="button">Início</button>
+      <button class="tab" data-view="quiz" type="button">Simulados</button>
+      <button class="tab" data-view="main30" type="button">30 Questões</button>
+      <button class="tab" data-view="review" type="button">Revisão Rápida</button>
+      <button class="tab" data-view="mistakes" type="button">Questões que Errei</button>
+      <button class="tab" data-view="performance" type="button">Meu Desempenho</button>
+    </nav>
+
+    <main>
+      <section class="view active" id="dashboardView">
+        <div class="hero-panel">
+          <div>
+            <p class="eyebrow">Prioridade de prova</p>
+            <h2>As 30 questões da Aula 6 são o centro dos simulados.</h2>
+            <p>O sistema prioriza os tópicos que aparecem no PDF de revisão e usa as aulas 1 a 5 como apoio.</p>
+          </div>
+          <div class="hero-actions">
+            <button class="primary" data-start="exam10" type="button">Fazer simulado de 10 questões</button>
+            <button class="secondary" data-start="main30" type="button">Estudar as 30 principais</button>
+          </div>
+        </div>
+
+        <div class="metrics-grid" id="dashboardMetrics"></div>
+
+        <div class="action-grid">
+          <button class="action-card" data-start="exam10" type="button">
+            <span>Simulado de prova</span>
+            <strong>10 questões</strong>
+          </button>
+          <button class="action-card" data-start="main30" type="button">
+            <span>Fonte principal</span>
+            <strong>30 questões da Aula 6</strong>
+          </button>
+          <button class="action-card" data-view-target="review" type="button">
+            <span>Antes da prova</span>
+            <strong>Revisão rápida</strong>
+          </button>
+          <button class="action-card" data-view-target="mistakes" type="button">
+            <span>Foco pessoal</span>
+            <strong>Revisar meus erros</strong>
+          </button>
+        </div>
+
+        <div class="two-column">
+          <section class="card">
+            <h3>Questões que mais erro</h3>
+            <div id="dashboardHardQuestions" class="compact-list"></div>
+          </section>
+          <section class="card">
+            <h3>Assuntos com mais dificuldade</h3>
+            <div id="dashboardWeakTopics" class="compact-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="quizView">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Modos de estudo</p>
+            <h2>Simulados</h2>
+          </div>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card" data-start="exam10" type="button"><strong>Simulado de 10 questões</strong><span>Formato curto, priorizando Aula 6.</span></button>
+          <button class="mode-card" data-start="quiz20" type="button"><strong>Simulado completo - 20</strong><span>Mais treino com principais e extras.</span></button>
+          <button class="mode-card" data-start="quiz30" type="button"><strong>Simulado completo - 30</strong><span>Boa revisão antes da prova.</span></button>
+          <button class="mode-card" data-start="all" type="button"><strong>Todas as questões</strong><span>Banco completo disponível.</span></button>
+          <button class="mode-card" data-start="likely" type="button"><strong>O que pode cair</strong><span>Mais recorrentes, sem promessa de prova.</span></button>
+          <button class="mode-card" data-start="errors" type="button"><strong>Simulado dos meus erros</strong><span>Gera treino a partir do seu histórico.</span></button>
+        </div>
+      </section>
+
+      <section class="view" id="main30View">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Aula 6</p>
+            <h2>30 Questões da Prova</h2>
+          </div>
+          <label class="toggle-line"><input id="shuffleMain30" type="checkbox" /> Embaralhar ordem</label>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card" data-start="main30" type="button"><strong>Responder às 30</strong><span>Estudo completo da fonte principal.</span></button>
+          <button class="mode-card" data-start="main30study" type="button"><strong>Estudar uma por uma</strong><span>Mesmo fluxo, com explicação após cada resposta.</span></button>
+          <button class="mode-card" data-start="main30errors" type="button"><strong>Refazer somente erradas</strong><span>Usa seus erros dentro das 30 principais.</span></button>
+        </div>
+        <section class="card">
+          <h3>Desempenho nessas 30 questões</h3>
+          <div id="main30Stats" class="compact-list"></div>
+        </section>
+      </section>
+
+      <section class="view" id="reviewView">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Consulta rápida</p>
+            <h2>Revisão Rápida</h2>
+          </div>
+        </div>
+        <div class="review-grid" id="reviewGrid"></div>
+      </section>
+
+      <section class="view" id="mistakesView">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">LocalStorage</p>
+            <h2>Questões que Errei</h2>
+          </div>
+          <button class="primary" data-start="errors" type="button">Criar simulado com meus erros</button>
+        </div>
+        <div id="mistakesList" class="table-card"></div>
+      </section>
+
+      <section class="view" id="performanceView">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Histórico e assuntos</p>
+            <h2>Meu Desempenho</h2>
+          </div>
+        </div>
+        <div class="two-column">
+          <section class="card">
+            <h3>Desempenho por assunto</h3>
+            <div id="topicPerformance"></div>
+          </section>
+          <section class="card">
+            <h3>Histórico de simulados</h3>
+            <div id="historyList" class="compact-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="quiz-shell hidden" id="quizShell" aria-live="polite">
+        <div class="quiz-top">
+          <div>
+            <p class="eyebrow" id="quizModeLabel">Simulado</p>
+            <h2 id="quizTitle">Questão</h2>
+          </div>
+          <div class="score-strip">
+            <span id="questionCounter">Questão 1 de 10</span>
+            <span class="ok" id="liveCorrect">Acertos: 0</span>
+            <span class="bad" id="liveWrong">Erros: 0</span>
+          </div>
+        </div>
+        <div class="progress"><span id="progressBar"></span></div>
+        <article class="question-card">
+          <div class="question-meta">
+            <span id="sourceBadge">Aula 6</span>
+            <span id="topicBadge">Assunto</span>
+          </div>
+          <h3 id="questionText"></h3>
+          <div id="optionsList" class="options-list"></div>
+          <div id="feedbackBox" class="feedback hidden"></div>
+          <div class="quiz-actions">
+            <button class="primary" id="confirmAnswerBtn" type="button">Confirmar resposta</button>
+            <button class="secondary" id="nextQuestionBtn" type="button" disabled>Próxima questão</button>
+            <button class="ghost" id="exitQuizBtn" type="button">Sair</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="result-modal hidden" id="resultModal">
+        <div class="result-card">
+          <h2>Resultado</h2>
+          <div id="resultSummary"></div>
+          <div class="quiz-actions">
+            <button class="primary" id="finishQuizBtn" type="button">Voltar ao início</button>
+            <button class="secondary" data-start="errors" type="button">Treinar erros</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="questions.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
